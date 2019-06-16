@@ -20,7 +20,7 @@ import {
   ENTROPY_LENGTH
 } from "./defaults";
 
-export function standardRandomBytesFunc(size: number) {
+export function standardRandomBytesFunc(size: number): string {
   if (typeof window !== "undefined" && typeof window.crypto !== "undefined") {
     let key = ``;
     let keyContainer = new Uint32Array(size / 4);
@@ -51,7 +51,7 @@ export function generateWalletFromSeed(
   return walletJson;
 }
 
-export function generateSeed(randomBytesFunc: IRandomBytesFunc) {
+export function generateSeed(randomBytesFunc: IRandomBytesFunc): string {
   const randomBytes = Buffer.from(randomBytesFunc(ENTROPY_LENGTH), `hex`);
   if (randomBytes.length !== ENTROPY_LENGTH) {
     throw Error(`Entropy has incorrect length`);
@@ -80,7 +80,7 @@ export function createNewWallet(
   derivationPath: string,
   randomBytesFunc: IRandomBytesFunc,
   formatAddress: IFormatAddressFunc
-) {
+): IKeyStore {
   const wallet = generateWallet(derivationPath, randomBytesFunc, formatAddress);
   const ciphertext = encrypt(JSON.stringify(wallet), password);
   const keystore = { name, address: wallet.address, wallet: ciphertext };
@@ -93,7 +93,7 @@ export function importWalletFromSeed(
   seed: string,
   derivationPath: string,
   formatAddress: IFormatAddressFunc
-) {
+): IKeyStore {
   const wallet = generateWalletFromSeed(seed, derivationPath, formatAddress);
   const ciphertext = encrypt(JSON.stringify(wallet), password);
   const keystore = { name, address: wallet.address, wallet: ciphertext };
@@ -101,7 +101,7 @@ export function importWalletFromSeed(
 }
 
 // NOTE: this only works with a compressed public key (33 bytes)
-export function formatCosmosAddress(publicKey: Buffer) {
+export function formatCosmosAddress(publicKey: Buffer): string {
   const message = CryptoJS.enc.Hex.parse(publicKey.toString(`hex`));
   const test: any = sha256(message);
   const hash = ripemd160(test).toString();
@@ -110,7 +110,7 @@ export function formatCosmosAddress(publicKey: Buffer) {
   return address;
 }
 
-export function deriveMasterKey(mnemonic: string) {
+export function deriveMasterKey(mnemonic: string): BIP32Interface {
   // throws if mnemonic is invalid
   bip39.validateMnemonic(mnemonic);
   const seed = bip39.mnemonicToSeed(mnemonic);
@@ -132,24 +132,27 @@ export function deriveKeypair(
   return keyPair;
 }
 
-export function bech32ify(address: Buffer, prefix: string) {
+export function bech32ify(address: Buffer, prefix: string): string {
   const words = bech32.toWords(address);
   const bech32String = bech32.encode(prefix, words);
   return bech32String;
 }
 
 // produces the signature for a message (returns Buffer)
-export function signWithPrivateKey(signMessage: string, privateKey: string) {
+export function signWithPrivateKey(
+  signMessage: string,
+  privateKey: string
+): string {
   const signHash = Buffer.from(sha256(signMessage).toString(), `hex`);
   const { signature } = secp256k1.sign(
     signHash,
     Buffer.from(privateKey, `hex`)
   );
-  return signature;
+  return signature.toString("hex");
 }
 
 // TODO needs proof reading
-export function encrypt(message: string, password: string) {
+export function encrypt(message: string, password: string): string {
   const salt = CryptoJS.lib.WordArray.random(PBKDF2_SALT_SIZE / 8);
 
   const key = CryptoJS.PBKDF2(password, salt, {
@@ -171,7 +174,7 @@ export function encrypt(message: string, password: string) {
   return transit;
 }
 
-export function decrypt(transit: string, password: string) {
+export function decrypt(transit: string, password: string): string {
   const salt = CryptoJS.enc.Hex.parse(transit.substr(0, 32));
   const iv = CryptoJS.enc.Hex.parse(transit.substr(32, 32));
   const encrypted = transit.substring(64);
@@ -220,4 +223,13 @@ export function createKeystore(
     wallet: ciphertext
   };
   return keystore;
+}
+
+export function verifyPassword(password: string): void {
+  if (!password) {
+    throw new Error("Password is required");
+  }
+  if (password.length < 8) {
+    throw new Error("Password length is less than 8 characters");
+  }
 }

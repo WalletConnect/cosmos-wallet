@@ -21,9 +21,8 @@ class CosmosWallet {
       opts.randomBytesFunc || utils.standardRandomBytesFunc;
     this.formatAddress = opts.formatAddress || utils.formatCosmosAddress;
 
-    if (!opts.password) {
-      throw new Error("Password is required");
-    }
+    // throws if password is invalid
+    utils.verifyPassword(opts.password);
 
     this.password = opts.password;
 
@@ -67,20 +66,19 @@ class CosmosWallet {
     // empty
   }
 
-  get address() {
+  get address(): string {
     return this.keystore.address;
   }
 
-  sign(message: string) {
+  sign(message: string): string {
     const walletJson = utils.openKeystore(this.keystore, this.password);
     const signature = utils.signWithPrivateKey(message, walletJson.privateKey);
     return signature;
   }
 
-  export(password: string) {
-    if (!password) {
-      throw new Error("Password is required");
-    }
+  export(password: string): IKeyStore {
+    // throws if password is invalid
+    utils.verifyPassword(password);
     const walletJson = utils.openKeystore(this.keystore, this.password);
     const keystore = utils.createKeystore(this.name, this.password, walletJson);
     return keystore;
