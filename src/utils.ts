@@ -6,7 +6,13 @@ import { fromSeed, BIP32Interface } from "bip32";
 import bech32 from "bech32";
 import secp256k1 from "secp256k1";
 import { IWalletJson, IRandomBytesFunc, IKeyPair, IKeyStore } from "./types";
-import { PBKDF2_KEY_SIZE, PBKDF2_ITERATIONS } from "./defaults";
+import {
+  PBKDF2_KEY_SIZE,
+  PBKDF2_SALT_SIZE,
+  PBKDF2_IV_SIZE,
+  PBKDF2_ITERATIONS,
+  ENTROPY_LENGTH
+} from "./defaults";
 
 export function standardRandomBytesFunc(size: number) {
   if (typeof window !== "undefined" && typeof window.crypto !== "undefined") {
@@ -39,8 +45,8 @@ export function generateWalletFromSeed(
 }
 
 export function generateSeed(randomBytesFunc: IRandomBytesFunc) {
-  const randomBytes = Buffer.from(randomBytesFunc(32), `hex`);
-  if (randomBytes.length !== 32) {
+  const randomBytes = Buffer.from(randomBytesFunc(ENTROPY_LENGTH), `hex`);
+  if (randomBytes.length !== ENTROPY_LENGTH) {
     throw Error(`Entropy has incorrect length`);
   }
   const mnemonic = bip39.entropyToMnemonic(randomBytes.toString(`hex`));
@@ -130,14 +136,14 @@ export function signWithPrivateKey(signMessage: string, privateKey: string) {
 
 // TODO needs proof reading
 export function encrypt(message: string, password: string) {
-  const salt = CryptoJS.lib.WordArray.random(128 / 8);
+  const salt = CryptoJS.lib.WordArray.random(PBKDF2_SALT_SIZE / 8);
 
   const key = CryptoJS.PBKDF2(password, salt, {
     keySize: PBKDF2_KEY_SIZE / 32,
     iterations: PBKDF2_ITERATIONS
   });
 
-  const iv = CryptoJS.lib.WordArray.random(128 / 8);
+  const iv = CryptoJS.lib.WordArray.random(PBKDF2_IV_SIZE / 8);
 
   const encrypted = CryptoJS.AES.encrypt(message, key, {
     iv,
