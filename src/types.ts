@@ -7,7 +7,7 @@ export interface ICosmosWalletOptions {
   randomBytesFunc?: IRandomBytesFunc;
   formatAddress?: IFormatAddressFunc;
   keystore?: IKeyStore;
-  seed?: string;
+  mnemomic?: string;
   password: string;
   name: string;
 }

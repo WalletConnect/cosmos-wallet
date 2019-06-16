@@ -39,17 +39,17 @@ class CosmosWallet {
       }
     }
 
-    if (opts.keystore && opts.seed) {
-      throw new Error("Can't generate wallet with both keystore and seed");
+    if (opts.keystore && opts.mnemomic) {
+      throw new Error("Can't generate wallet with both keystore and mnemomic");
     }
 
     this.keystore =
       opts.keystore ||
-      (opts.seed
+      (opts.mnemomic
         ? utils.importWalletFromSeed(
             this.name,
             this.password,
-            opts.seed,
+            opts.mnemomic,
             this.derivationPath,
             this.formatAddress
           )
@@ -76,11 +76,15 @@ class CosmosWallet {
     return signature;
   }
 
-  export(password: string): IKeyStore {
+  export(password: string, name?: string): IKeyStore {
     // throws if password is invalid
     utils.verifyPassword(password);
     const walletJson = utils.openKeystore(this.keystore, this.password);
-    const keystore = utils.createKeystore(this.name, this.password, walletJson);
+    const keystore = utils.createKeystore(
+      name || this.name,
+      this.password,
+      walletJson
+    );
     return keystore;
   }
 }
