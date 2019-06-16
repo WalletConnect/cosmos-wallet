@@ -5,7 +5,13 @@ import bip39 from "bip39";
 import { fromSeed, BIP32Interface } from "bip32";
 import bech32 from "bech32";
 import secp256k1 from "secp256k1";
-import { IWalletJson, IRandomBytesFunc, IKeyPair, IKeyStore } from "./types";
+import {
+  IWalletJson,
+  IRandomBytesFunc,
+  IKeyPair,
+  IKeyStore,
+  IFormatAddressFunc
+} from "./types";
 import {
   PBKDF2_KEY_SIZE,
   PBKDF2_SALT_SIZE,
@@ -31,11 +37,12 @@ export function standardRandomBytesFunc(size: number) {
 
 export function generateWalletFromSeed(
   mnemonic: string,
-  derivationPath: string
+  derivationPath: string,
+  formatAddress: IFormatAddressFunc
 ): IWalletJson {
   const masterKey = deriveMasterKey(mnemonic);
   const { privateKey, publicKey } = deriveKeypair(masterKey, derivationPath);
-  const address = createCosmosAddress(publicKey);
+  const address = formatAddress(publicKey);
   const walletJson: IWalletJson = {
     privateKey: privateKey.toString(`hex`),
     publicKey: publicKey.toString(`hex`),
@@ -55,10 +62,15 @@ export function generateSeed(randomBytesFunc: IRandomBytesFunc) {
 
 export function generateWallet(
   derivationPath: string,
-  randomBytesFunc: IRandomBytesFunc
+  randomBytesFunc: IRandomBytesFunc,
+  formatAddress: IFormatAddressFunc
 ): IWalletJson {
   const mnemonic = generateSeed(randomBytesFunc);
-  const walletJson = generateWalletFromSeed(mnemonic, derivationPath);
+  const walletJson = generateWalletFromSeed(
+    mnemonic,
+    derivationPath,
+    formatAddress
+  );
   return walletJson;
 }
 
@@ -66,9 +78,10 @@ export function createNewWallet(
   name: string,
   password: string,
   derivationPath: string,
-  randomBytesFunc: IRandomBytesFunc
+  randomBytesFunc: IRandomBytesFunc,
+  formatAddress: IFormatAddressFunc
 ) {
-  const wallet = generateWallet(derivationPath, randomBytesFunc);
+  const wallet = generateWallet(derivationPath, randomBytesFunc, formatAddress);
   const ciphertext = encrypt(JSON.stringify(wallet), password);
   const keystore = { name, address: wallet.address, wallet: ciphertext };
   return keystore;
@@ -78,16 +91,17 @@ export function importWalletFromSeed(
   name: string,
   password: string,
   seed: string,
-  derivationPath: string
+  derivationPath: string,
+  formatAddress: IFormatAddressFunc
 ) {
-  const wallet = generateWalletFromSeed(seed, derivationPath);
+  const wallet = generateWalletFromSeed(seed, derivationPath, formatAddress);
   const ciphertext = encrypt(JSON.stringify(wallet), password);
   const keystore = { name, address: wallet.address, wallet: ciphertext };
   return keystore;
 }
 
 // NOTE: this only works with a compressed public key (33 bytes)
-export function createCosmosAddress(publicKey: Buffer) {
+export function formatCosmosAddress(publicKey: Buffer) {
   const message = CryptoJS.enc.Hex.parse(publicKey.toString(`hex`));
   const test: any = sha256(message);
   const hash = ripemd160(test).toString();
@@ -192,4 +206,18 @@ export function openKeystore(
   const decrypted = decrypt(keystore.wallet, password);
   const walletJson = JSON.parse(decrypted);
   return walletJson;
+}
+
+export function createKeystore(
+  name: string,
+  password: string,
+  wallet: IWalletJson
+): IKeyStore {
+  const ciphertext = encrypt(JSON.stringify(wallet), password);
+  const keystore = {
+    name,
+    address: wallet.address,
+    wallet: ciphertext
+  };
+  return keystore;
 }

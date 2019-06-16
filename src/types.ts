@@ -1,6 +1,11 @@
+export type IRandomBytesFunc = (size: number) => string;
+
+export type IFormatAddressFunc = (publicKey: Buffer) => string;
+
 export interface ICosmosWalletOptions {
   derivationPath?: string;
   randomBytesFunc?: IRandomBytesFunc;
+  formatAddress?: IFormatAddressFunc;
   keystore?: IKeyStore;
   seed?: string;
   password: string;
@@ -17,8 +22,6 @@ export interface IKeyStore {
   address: string;
   wallet: string;
 }
-
-export type IRandomBytesFunc = (size: number) => string;
 
 export interface IWalletJson {
   privateKey: string;

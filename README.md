@@ -1,3 +1,3 @@
 # cosmos-wallet
 
-Parse Ethereum EIP831 standard URI formats (expandable)
+Configurable Wallet for Cosmos SDK Chains

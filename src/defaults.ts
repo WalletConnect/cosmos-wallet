@@ -7,3 +7,5 @@ export const PBKDF2_SALT_SIZE = 128;
 export const PBKDF2_IV_SIZE = 128;
 
 export const PBKDF2_ITERATIONS = 100;
+
+export const ENTROPY_LENGTH = 32;
