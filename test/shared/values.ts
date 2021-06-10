@@ -1,5 +1,3 @@
-import { coins } from '@cosmjs/proto-signing';
-
 export const TEST_COSMOS_KEYPAIR = {
   publicKey:
     '0204848ceb8eafdf754251c2391466744e5a85529ec81ae6b60a187a90a9406396',
@@ -23,7 +21,7 @@ export const TEST_MNEMONIC =
 
 export const TEST_COSMOS_INPUTS = {
   direct: {
-    fee: coins(2000, 'ucosm'),
+    fee: [{ amount: '2000', denom: 'ucosm' }],
     pubkey: 'AgSEjOuOr991QlHCORRmdE5ahVKeyBrmtgoYepCpQGOW',
     gasLimit: 200000,
     accountNumber: 1,

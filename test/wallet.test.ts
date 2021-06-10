@@ -1,7 +1,4 @@
-import { fromHex } from '@cosmjs/encoding';
-import { makeSignDoc, makeAuthInfoBytes } from '@cosmjs/proto-signing';
-
-import Wallet from '../src';
+import Wallet, { formatDirectSignDoc } from '../src';
 
 import {
   TEST_COSMOS_ADDRESS,
@@ -24,6 +21,7 @@ describe('Wallet', () => {
     expect(result[0].algo).toEqual('secp256k1');
   });
   it('signDirect', async () => {
+    const chainId = TEST_COSMOS_CHAIN_REFERENCE;
     const signerAddress = TEST_COSMOS_ADDRESS;
     const {
       fee,
@@ -33,17 +31,14 @@ describe('Wallet', () => {
       sequence,
       bodyBytes,
     } = TEST_COSMOS_INPUTS.direct;
-    const authInfoBytes = makeAuthInfoBytes(
-      [pubkey as any],
+    const signDoc = formatDirectSignDoc(
       fee,
+      pubkey,
       gasLimit,
-      sequence
-    );
-    const signDoc = makeSignDoc(
-      fromHex(bodyBytes),
-      authInfoBytes,
-      TEST_COSMOS_CHAIN_REFERENCE,
-      accountNumber
+      accountNumber,
+      sequence,
+      bodyBytes,
+      chainId
     );
     const result = await wallet.signDirect(signerAddress, signDoc);
     expect(result).toBeTruthy();
