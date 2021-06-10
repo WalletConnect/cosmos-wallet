@@ -7,7 +7,6 @@ import {
   makeSignDoc,
   makeAuthInfoBytes,
 } from '@cosmjs/proto-signing';
-import { SignDoc } from '@cosmjs/proto-signing/build/codec/cosmos/tx/v1beta1/tx';
 
 import { COSMOS_ADDRESS_PREFIX } from '../constants';
 
