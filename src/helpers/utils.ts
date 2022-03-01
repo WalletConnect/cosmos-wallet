@@ -1,13 +1,16 @@
-import Long from 'long';
-import { Secp256k1 } from '@cosmjs/crypto';
-import { pubkeyToAddress, pubkeyType, Coin } from '@cosmjs/amino';
-import { toBase64, toHex, fromHex } from '@cosmjs/encoding';
+import { Coin, pubkeyToAddress, pubkeyType } from '@cosmjs/amino';
+import {
+  ExtendedSecp256k1Signature,
+  Secp256k1,
+  Secp256k1Signature,
+} from '@cosmjs/crypto';
+import { fromHex, toBase64, toHex, fromBase64 } from '@cosmjs/encoding';
 import {
   AccountData,
-  makeSignDoc,
   makeAuthInfoBytes,
+  makeSignDoc,
 } from '@cosmjs/proto-signing';
-
+import Long from 'long';
 import { COSMOS_ADDRESS_PREFIX } from '../constants';
 
 export function getCosmosAddressPrefix(chainId?: string) {
@@ -97,4 +100,48 @@ export function stringifyAccountDataValues(account: AccountData) {
 
 export function parseAccountDataValues(account: any) {
   return { ...account, pubkey: fromHex(account.pubkey) };
+}
+
+export async function recoverSigningAddress(
+  signature: string,
+  hash: Uint8Array,
+  recoveryIndex: number
+): Promise<string | null> {
+  if (recoveryIndex > 3) {
+    throw new Error('Invalid recovery index');
+  }
+
+  const sig = Secp256k1Signature.fromFixedLength(fromBase64(signature));
+  const extendedSig = new ExtendedSecp256k1Signature(
+    sig.r(),
+    sig.s(),
+    recoveryIndex
+  );
+  try {
+    const recoveredPubKey = await Secp256k1.recoverPubkey(extendedSig, hash);
+    return pubkeyToAddress(
+      {
+        type: 'tendermint/PubKeySecp256k1',
+        value: toBase64(Secp256k1.compressPubkey(recoveredPubKey)),
+      },
+      'cosmos'
+    );
+  } catch {
+    return null;
+  }
+}
+
+export async function verifyCosmosSignature(
+  address: string,
+  signature: string,
+  hash: Uint8Array
+): Promise<boolean> {
+  for (let i = 0; i < 4; i++) {
+    const recoveredAddress = await recoverSigningAddress(signature, hash, i);
+    if (recoveredAddress === address) {
+      return true;
+    }
+  }
+
+  return false;
 }

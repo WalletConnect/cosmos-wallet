@@ -1,5 +1,5 @@
-import { Secp256k1, Sha256 } from '@cosmjs/crypto';
-import { fromHex } from '@cosmjs/encoding';
+import { Secp256k1, sha256, Secp256k1Signature } from '@cosmjs/crypto';
+import { fromHex, fromBase64 } from '@cosmjs/encoding';
 import {
   encodeSecp256k1Signature,
   serializeSignDoc,
@@ -10,6 +10,7 @@ import {
 import {
   DirectSecp256k1Wallet,
   DirectSignResponse,
+  makeSignBytes,
 } from '@cosmjs/proto-signing';
 import { SignDoc } from '@cosmjs/proto-signing/build/codec/cosmos/tx/v1beta1/tx';
 
@@ -17,6 +18,7 @@ import {
   getAddressFromPublicKey,
   getPublicKey,
   ICosmosWallet,
+  verifyCosmosSignature,
 } from './helpers';
 
 export class CosmosWallet implements ICosmosWallet {
@@ -56,11 +58,20 @@ export class CosmosWallet implements ICosmosWallet {
     if (address !== this.address) {
       throw new Error(`Address ${address} not found in wallet`);
     }
-    const message = new Sha256(serializeSignDoc(signDoc)).digest();
+    const message = sha256(serializeSignDoc(signDoc));
     const sig = await Secp256k1.createSignature(message, this.privkey);
     const sigBytes = new Uint8Array([...sig.r(32), ...sig.s(32)]);
     const signature = encodeSecp256k1Signature(this.pubkey, sigBytes);
     return { signed: signDoc, signature };
+  }
+
+  public async verifyDirect(
+    address: string,
+    signature: string,
+    signDoc: SignDoc
+  ) {
+    const messageHash = sha256(makeSignBytes(signDoc));
+    return await verifyCosmosSignature(address, signature, messageHash);
   }
 }
 

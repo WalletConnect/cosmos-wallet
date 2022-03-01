@@ -1,4 +1,4 @@
-import Wallet, { formatDirectSignDoc } from '../src';
+import Wallet, { formatDirectSignDoc, recoverSigningAddress } from '../src';
 
 import {
   TEST_COSMOS_ADDRESS,
@@ -41,6 +41,9 @@ describe('Wallet', () => {
       chainId
     );
     const result = await wallet.signDirect(signerAddress, signDoc);
+    expect(
+      wallet.verifyDirect(signerAddress, result.signature.signature, signDoc)
+    ).toBeTruthy();
     expect(result).toBeTruthy();
     expect(result.signature.signature).toEqual(TEST_COSMOS_DIRECT_SIGNATURE);
   });
