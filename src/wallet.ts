@@ -1,24 +1,23 @@
-import { Secp256k1, sha256, Secp256k1Signature } from '@cosmjs/crypto';
-import { fromHex, fromBase64 } from '@cosmjs/encoding';
 import {
+  AccountData,
+  AminoSignResponse,
   encodeSecp256k1Signature,
   serializeSignDoc,
   StdSignDoc,
-  AminoSignResponse,
-  AccountData,
 } from '@cosmjs/amino';
+import { Secp256k1, sha256 } from '@cosmjs/crypto';
+import { fromHex } from '@cosmjs/encoding';
 import {
   DirectSecp256k1Wallet,
   DirectSignResponse,
   makeSignBytes,
 } from '@cosmjs/proto-signing';
 import { SignDoc } from '@cosmjs/proto-signing/build/codec/cosmos/tx/v1beta1/tx';
-
 import {
   getAddressFromPublicKey,
   getPublicKey,
   ICosmosWallet,
-  verifyCosmosSignature,
+  verifySignature,
 } from './helpers';
 
 export class CosmosWallet implements ICosmosWallet {
@@ -65,13 +64,22 @@ export class CosmosWallet implements ICosmosWallet {
     return { signed: signDoc, signature };
   }
 
-  public async verifyDirect(
+  public verifyDirectSignature(
     address: string,
     signature: string,
     signDoc: SignDoc
   ) {
     const messageHash = sha256(makeSignBytes(signDoc));
-    return await verifyCosmosSignature(address, signature, messageHash);
+    return verifySignature(address, signature, messageHash);
+  }
+
+  public verifyAminoSignature(
+    address: string,
+    signature: string,
+    signDoc: StdSignDoc
+  ) {
+    const messageHash = sha256(serializeSignDoc(signDoc));
+    return verifySignature(address, signature, messageHash);
   }
 }
 

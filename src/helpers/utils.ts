@@ -131,7 +131,7 @@ export async function recoverSigningAddress(
   }
 }
 
-export async function verifyCosmosSignature(
+export async function verifySignature(
   address: string,
   signature: string,
   hash: Uint8Array
