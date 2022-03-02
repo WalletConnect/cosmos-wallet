@@ -10,14 +10,12 @@ import { fromHex } from '@cosmjs/encoding';
 import {
   DirectSecp256k1Wallet,
   DirectSignResponse,
-  makeSignBytes,
 } from '@cosmjs/proto-signing';
 import { SignDoc } from '@cosmjs/proto-signing/build/codec/cosmos/tx/v1beta1/tx';
 import {
   getAddressFromPublicKey,
   getPublicKey,
   ICosmosWallet,
-  verifySignature,
 } from './helpers';
 
 export class CosmosWallet implements ICosmosWallet {
@@ -62,24 +60,6 @@ export class CosmosWallet implements ICosmosWallet {
     const sigBytes = new Uint8Array([...sig.r(32), ...sig.s(32)]);
     const signature = encodeSecp256k1Signature(this.pubkey, sigBytes);
     return { signed: signDoc, signature };
-  }
-
-  public verifyDirectSignature(
-    address: string,
-    signature: string,
-    signDoc: SignDoc
-  ) {
-    const messageHash = sha256(makeSignBytes(signDoc));
-    return verifySignature(address, signature, messageHash);
-  }
-
-  public verifyAminoSignature(
-    address: string,
-    signature: string,
-    signDoc: StdSignDoc
-  ) {
-    const messageHash = sha256(serializeSignDoc(signDoc));
-    return verifySignature(address, signature, messageHash);
   }
 }
 

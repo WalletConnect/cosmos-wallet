@@ -18,16 +18,4 @@ export abstract class ICosmosWallet implements OfflineDirectSigner {
     signerAddress: string,
     signDoc: StdSignDoc
   ): Promise<AminoSignResponse>;
-
-  public abstract verifyDirectSignature(
-    address: string,
-    signature: string,
-    signDoc: SignDoc
-  ): Promise<boolean>;
-
-  public abstract verifyAminoSignature(
-    address: string,
-    signature: string,
-    signDoc: StdSignDoc
-  ): Promise<boolean>;
 }

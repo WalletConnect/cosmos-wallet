@@ -1,15 +1,24 @@
-import { Coin, pubkeyToAddress, pubkeyType } from '@cosmjs/amino';
+import {
+  Coin,
+  pubkeyToAddress,
+  pubkeyType,
+  serializeSignDoc,
+  StdSignDoc,
+} from '@cosmjs/amino';
 import {
   ExtendedSecp256k1Signature,
   Secp256k1,
+  sha256,
   Secp256k1Signature,
 } from '@cosmjs/crypto';
 import { fromHex, toBase64, toHex, fromBase64 } from '@cosmjs/encoding';
 import {
   AccountData,
   makeAuthInfoBytes,
+  makeSignBytes,
   makeSignDoc,
 } from '@cosmjs/proto-signing';
+import { SignDoc } from '@cosmjs/proto-signing/build/codec/cosmos/tx/v1beta1/tx';
 import Long from 'long';
 import { COSMOS_ADDRESS_PREFIX } from '../constants';
 
@@ -145,3 +154,21 @@ export async function verifySignature(
 
   return false;
 }
+
+export const verifyDirectSignature = (
+  address: string,
+  signature: string,
+  signDoc: SignDoc
+) => {
+  const messageHash = sha256(makeSignBytes(signDoc));
+  return verifySignature(address, signature, messageHash);
+};
+
+export const verifyAminoSignature = (
+  address: string,
+  signature: string,
+  signDoc: StdSignDoc
+) => {
+  const messageHash = sha256(serializeSignDoc(signDoc));
+  return verifySignature(address, signature, messageHash);
+};
