@@ -1,5 +1,8 @@
-import Wallet, { formatDirectSignDoc } from '../src';
-
+import Wallet, {
+  formatDirectSignDoc,
+  verifyAminoSignature,
+  verifyDirectSignature,
+} from '../src';
 import {
   TEST_COSMOS_ADDRESS,
   TEST_COSMOS_AMINO_SIGNATURE,
@@ -41,6 +44,9 @@ describe('Wallet', () => {
       chainId
     );
     const result = await wallet.signDirect(signerAddress, signDoc);
+    expect(
+      verifyDirectSignature(signerAddress, result.signature.signature, signDoc)
+    ).toBeTruthy();
     expect(result).toBeTruthy();
     expect(result.signature.signature).toEqual(TEST_COSMOS_DIRECT_SIGNATURE);
   });
@@ -48,6 +54,9 @@ describe('Wallet', () => {
     const signerAddress = TEST_COSMOS_ADDRESS;
     const signDoc = TEST_COSMOS_INPUTS.amino;
     const result = await wallet.signAmino(signerAddress, signDoc);
+    expect(
+      verifyAminoSignature(signerAddress, result.signature.signature, signDoc)
+    ).toBeTruthy();
     expect(result).toBeTruthy();
     expect(result.signature.signature).toEqual(TEST_COSMOS_AMINO_SIGNATURE);
   });
